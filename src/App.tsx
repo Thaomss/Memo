@@ -573,6 +573,7 @@ const mapZones: MapZone[] = [
   { label: '200-365', from: 200, to: 365, x: 18.8, y: 34.5, width: 20.5, height: 18.6, color: '#b23b4f', hint: 'Accra / Esterel', columns: 13 },
   { label: '420-541', from: 420, to: 541, x: 7.5, y: 24.8, width: 24.2, height: 25.5, color: '#e34a4a', hint: 'Reposoir depot', columns: 12 },
   { label: '548-590', from: 548, to: 590, x: 24.6, y: 43.2, width: 13.8, height: 14.8, color: '#1d9aa0', hint: 'allee Coton Indien', columns: 7 },
+  { label: '591-599', from: 591, to: 599, x: 24.6, y: 43.2, width: 13.8, height: 14.8, color: '#1d9aa0', hint: 'allee Coton Indien', columns: 3 },
   { label: '600-671', from: 600, to: 671, x: 61.5, y: 20.2, width: 14.8, height: 25.5, color: '#f4d900', hint: 'secteur 600', columns: 8 },
   { label: '700-739', from: 700, to: 739, x: 76.8, y: 35.8, width: 17.0, height: 15.3, color: '#b05aa8', hint: 'Monte Vento', columns: 8 },
   { label: '800-836', from: 800, to: 836, x: 62.5, y: 16.7, width: 9.2, height: 29.0, color: '#2d8cc8', hint: 'grand bloc bleu', columns: 5 },
