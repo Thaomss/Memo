@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useRef, useState, type PointerEvent } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import planImage from './assets/drago/plan-dragonniere.png';
+import placementData from './placements-dragonniere.json';
 
 type Tab = 'horaires' | 'plan' | 'tarifs';
 type DayKind = 'week' | 'weekend' | 'all' | 'special';
@@ -584,11 +585,7 @@ const mapZones: MapZone[] = [
   { label: '1500-1537', from: 1500, to: 1537, x: 79.0, y: 23.8, width: 16.7, height: 13.8, color: '#8d8b58', hint: 'bloc vert / olive', columns: 8 },
 ];
 
-const exactPlaces: Record<number, { x: number; y: number }> = {
-  571: { x: 25.5, y: 48.9 },
-  836: { x: 70.9, y: 14.6 },
-  1512: { x: 80.7, y: 31.2 },
-};
+const exactPlaces = placementData as PlacementMap;
 
 const categories: Category[] = ['Sante', 'Services', 'Restauration', 'Bars', 'Commerces', 'Aquatique', 'Activites'];
 
@@ -706,14 +703,6 @@ const getScheduleScore = (schedule: Schedule, needle: string) => {
   return score;
 };
 
-const loadDraftPlacements = (): PlacementMap => {
-  try {
-    return JSON.parse(localStorage.getItem('drago-draft-placements') || '{}') as PlacementMap;
-  } catch {
-    return {};
-  }
-};
-
 function findPlace(query: string, placements: PlacementMap): PlaceResult | null {
   const number = Number(query.replace(/\D/g, ''));
   if (!number) return null;
@@ -761,12 +750,8 @@ export default function App() {
   const [onlyToday, setOnlyToday] = useState(false);
   const [mapSearch, setMapSearch] = useState('');
   const [mapZoom, setMapZoom] = useState(1.15);
-  const [placementMode, setPlacementMode] = useState(false);
-  const [draggingNumber, setDraggingNumber] = useState<number | null>(null);
-  const [draftPlacements, setDraftPlacements] = useState<PlacementMap>(loadDraftPlacements);
   const mapStageRef = useRef<HTMLDivElement | null>(null);
   const mapCanvasRef = useRef<HTMLDivElement | null>(null);
-  const planImageRef = useRef<HTMLImageElement | null>(null);
 
   const todayKind = getTodayKind();
   const filteredSchedules = useMemo(() => {
@@ -791,16 +776,12 @@ export default function App() {
     return null;
   }, [filteredSchedules, selectedSchedule, query]);
 
-  const placements = useMemo(() => ({ ...exactPlaces, ...draftPlacements }), [draftPlacements]);
+  const placements = exactPlaces;
   const activePlace = findPlace(mapSearch, placements);
   const selectedNumber = mapSearch.replace(/\D/g, '');
 
   useEffect(() => {
-    localStorage.setItem('drago-draft-placements', JSON.stringify(draftPlacements));
-  }, [draftPlacements]);
-
-  useEffect(() => {
-    if (!activePlace || placementMode || !mapStageRef.current || !mapCanvasRef.current || tab !== 'plan') return;
+    if (!activePlace || !mapStageRef.current || !mapCanvasRef.current || tab !== 'plan') return;
     const stage = mapStageRef.current;
     const canvas = mapCanvasRef.current;
     const handle = window.setTimeout(() => {
@@ -815,79 +796,9 @@ export default function App() {
       });
     }, 80);
     return () => window.clearTimeout(handle);
-  }, [activePlace, mapZoom, placementMode, tab]);
+  }, [activePlace, mapZoom, tab]);
 
-  const updatePlacementFromPoint = (clientX: number, clientY: number, number: number) => {
-    if (!planImageRef.current) return;
-    const rect = planImageRef.current.getBoundingClientRect();
-    const x = Number(Math.min(100, Math.max(0, ((clientX - rect.left) / rect.width) * 100)).toFixed(3));
-    const y = Number(Math.min(100, Math.max(0, ((clientY - rect.top) / rect.height) * 100)).toFixed(3));
-    setDraftPlacements((current) => ({ ...current, [number]: { x, y } }));
-  };
 
-  const placeCurrentNumber = (event: PointerEvent<HTMLDivElement>) => {
-    if (!placementMode || draggingNumber || !selectedNumber) return;
-    const number = Number(selectedNumber);
-    if (!number) return;
-    updatePlacementFromPoint(event.clientX, event.clientY, number);
-  };
-
-  const startDraggingPlacement = (event: PointerEvent<HTMLElement>, number: number) => {
-    if (!placementMode) return;
-    event.preventDefault();
-    event.stopPropagation();
-    event.currentTarget.setPointerCapture(event.pointerId);
-    setDraggingNumber(number);
-    setMapSearch(String(number));
-  };
-
-  useEffect(() => {
-    if (!placementMode || draggingNumber === null) return;
-    const move = (event: globalThis.PointerEvent) => {
-      updatePlacementFromPoint(event.clientX, event.clientY, draggingNumber);
-    };
-    const stop = () => setDraggingNumber(null);
-    window.addEventListener('pointermove', move);
-    window.addEventListener('pointerup', stop);
-    window.addEventListener('pointercancel', stop);
-    return () => {
-      window.removeEventListener('pointermove', move);
-      window.removeEventListener('pointerup', stop);
-      window.removeEventListener('pointercancel', stop);
-    };
-  }, [draggingNumber, placementMode]);
-
-  useEffect(() => {
-    if (activeSchedule && selectedSchedule !== activeSchedule.name) {
-      setSelectedSchedule(activeSchedule.name);
-    }
-  }, [activeSchedule, selectedSchedule]);
-
-  const nudgePlacement = (dx: number, dy: number) => {
-    const number = Number(selectedNumber);
-    if (!number) return;
-    const current = draftPlacements[number] || activePlace;
-    if (!current) return;
-    setDraftPlacements((items) => ({
-      ...items,
-      [number]: {
-        x: Number(Math.min(100, Math.max(0, current.x + dx)).toFixed(3)),
-        y: Number(Math.min(100, Math.max(0, current.y + dy)).toFixed(3)),
-      },
-    }));
-  };
-
-  const exportPlacements = () => {
-    const data = JSON.stringify(placements, null, 2);
-    void navigator.clipboard?.writeText(data);
-    const blob = new Blob([data], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'placements-dragonniere.json';
-    link.click();
-    URL.revokeObjectURL(url);
-  };
 
   return (
     <div className="app-shell">
@@ -1028,57 +939,18 @@ export default function App() {
                 <button onClick={() => setMapZoom((value) => Math.min(2.2, Number((value + .15).toFixed(2))))}>+</button>
                 <button onClick={() => setMapZoom(1.15)}>Reset</button>
               </div>
-              <button className={`placement-toggle ${placementMode ? 'active' : ''}`} onClick={() => setPlacementMode((value) => !value)}>
-                Placement
-              </button>
             </div>
 
-            {placementMode && (
-              <div className="placement-bar">
-                <strong>Mode placement</strong>
-                <span>
-                  {activePlace
-                    ? `x ${activePlace.x.toFixed(3)} / y ${activePlace.y.toFixed(3)}`
-                    : 'Tape un numero, puis clique au centre du logement.'}
-                </span>
-                <div className="nudge-pad" aria-label="Ajustement fin">
-                  <button disabled={!activePlace} onClick={() => nudgePlacement(0, -.06)}>Haut</button>
-                  <button disabled={!activePlace} onClick={() => nudgePlacement(-.06, 0)}>Gauche</button>
-                  <button disabled={!activePlace} onClick={() => nudgePlacement(.06, 0)}>Droite</button>
-                  <button disabled={!activePlace} onClick={() => nudgePlacement(0, .06)}>Bas</button>
-                </div>
-                <button disabled={!Object.keys(placements).length} onClick={exportPlacements}>Exporter JSON</button>
-                <button disabled={!selectedNumber || !draftPlacements[Number(selectedNumber)]} onClick={() => setDraftPlacements((current) => {
-                  const next = { ...current };
-                  delete next[Number(selectedNumber)];
-                  return next;
-                })}>Retirer ce point</button>
-              </div>
-            )}
 
-            <div className={`map-stage ${placementMode ? 'placing' : ''} ${draggingNumber !== null ? 'dragging' : ''}`} ref={mapStageRef}>
+            <div className="map-stage" ref={mapStageRef}>
               <div className="map-frame">
                 <div
                   className="map-canvas"
                   ref={mapCanvasRef}
                   style={{ width: `${1280 * mapZoom}px` }}
                 >
-                  <img ref={planImageRef} src={planImage} alt="Plan du Domaine de la Dragonniere" />
-                  <div className="map-overlay" onPointerDown={placeCurrentNumber}>
-                    {placementMode && Object.entries(draftPlacements).map(([number, point]) => (
-                      <button
-                        className="placement-dot"
-                        key={number}
-                        style={{ left: `${point.x}%`, top: `${point.y}%` }}
-                        onPointerDown={(event) => startDraggingPlacement(event, Number(number))}
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          setMapSearch(number);
-                        }}
-                      >
-                        {number}
-                      </button>
-                    ))}
+                  <img src={planImage} alt="Plan du Domaine de la Dragonniere" />
+                  <div className="map-overlay">
                     {activePlace && (
                       <>
                         <div
@@ -1091,30 +963,16 @@ export default function App() {
                             borderColor: activePlace.zone.color,
                           }}
                         />
-                        {placementMode ? (
-                          <div
-                            className="precision-target"
-                            style={{
-                              left: `${activePlace.x}%`,
-                              top: `${activePlace.y}%`,
-                              color: activePlace.zone.color,
-                            }}
-                            onPointerDown={(event) => startDraggingPlacement(event, activePlace.number)}
-                          >
-                            <span>{activePlace.number}</span>
-                          </div>
-                        ) : (
-                          <div
-                            className="map-pin"
-                            style={{
-                              left: `${activePlace.x}%`,
-                              top: `${activePlace.y}%`,
-                              color: activePlace.zone.color,
-                            }}
-                          >
-                            <span>{activePlace.number}</span>
-                          </div>
-                        )}
+                        <div
+                          className="map-pin"
+                          style={{
+                            left: `${activePlace.x}%`,
+                            top: `${activePlace.y}%`,
+                            color: activePlace.zone.color,
+                          }}
+                        >
+                          <span>{activePlace.number}</span>
+                        </div>
                       </>
                     )}
                   </div>
