@@ -578,11 +578,12 @@ const mapZones: MapZone[] = [
   { label: '600-671', from: 600, to: 671, x: 61.5, y: 20.2, width: 14.8, height: 25.5, color: '#f4d900', hint: 'secteur 600', columns: 8 },
   { label: '700-739', from: 700, to: 739, x: 76.8, y: 35.8, width: 17.0, height: 15.3, color: '#b05aa8', hint: 'Monte Vento', columns: 8 },
   { label: '800-836', from: 800, to: 836, x: 62.5, y: 16.7, width: 9.2, height: 29.0, color: '#2d8cc8', hint: 'grand bloc bleu', columns: 5 },
-  { label: '900-908', from: 900, to: 908, x: 80.5, y: 18.6, width: 14.8, height: 8.1, color: '#e1a12b', hint: 'Mousson', columns: 5 },
+  { label: '900-909', from: 900, to: 909, x: 80.5, y: 18.6, width: 14.8, height: 8.1, color: '#e1a12b', hint: 'Mousson', columns: 5 },
   { label: '1000-1104', from: 1000, to: 1104, x: 76.0, y: 9.2, width: 21.6, height: 28.0, color: '#cf2234', hint: 'haut et cote droit', columns: 10 },
   { label: '1200-1213', from: 1200, to: 1213, x: 63.9, y: 10.5, width: 8.2, height: 13.8, color: '#4b9bd5', hint: 'haut centre droit', columns: 4 },
   { label: '1300-1304', from: 1300, to: 1304, x: 65.2, y: 7.5, width: 6.2, height: 6.5, color: '#253b7c', hint: 'haut centre droit', columns: 5 },
   { label: '1500-1537', from: 1500, to: 1537, x: 79.0, y: 23.8, width: 16.7, height: 13.8, color: '#8d8b58', hint: 'bloc vert / olive', columns: 8 },
+  { label: '2000', from: 2000, to: 2000, x: 73.0, y: 24.0, width: 2.0, height: 2.0, color: '#cf2234', hint: 'emplacement 2000', columns: 1 },
 ];
 
 const exactPlaces = placementData as PlacementMap;
