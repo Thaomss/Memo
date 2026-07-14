@@ -25,7 +25,7 @@ jobs:
         with:
           node-version: 20
 
-      - run: npm install
+      - run: npm install --no-package-lock --registry=https://registry.npmjs.org
 
       - run: npm run build -- --base=/Memo/
 
